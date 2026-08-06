@@ -1,2 +1,2 @@
 # SecureRISC
-A secure RISC-V processor architecture for IoT devices featuring hardware-based memory protection, instruction verification, and modular RTL design using Verilog.
+A Lightweight Hardware-Assisted Secure RISC-V Processor for Resource-Constrained IoT Devices
