@@ -46,35 +46,85 @@ always @(*) begin
 
         4'b0000: begin
             // ADD
-        end
+    {carry_temp, arithmetic_result} = operand_a + operand_b;
+
+    result = arithmetic_result;
+
+    carry_flag = carry_temp;
+
+    overflow_flag =
+        (~operand_a[DATA_WIDTH-1] &
+         ~operand_b[DATA_WIDTH-1] &
+          result[DATA_WIDTH-1]) |
+
+        ( operand_a[DATA_WIDTH-1] &
+          operand_b[DATA_WIDTH-1] &
+         ~result[DATA_WIDTH-1]);
+end
 
         4'b0001: begin
             // SUB
+{carry_temp, arithmetic_result} = operand_a - operand_b;
+
+result = arithmetic_result;
+
+carry_flag = carry_temp;
+
+overflow_flag =
+    (~operand_a[DATA_WIDTH-1] &
+      operand_b[DATA_WIDTH-1] &
+      result[DATA_WIDTH-1]) |
+
+    ( operand_a[DATA_WIDTH-1] &
+     ~operand_b[DATA_WIDTH-1] &
+     ~result[DATA_WIDTH-1]);
         end
 
         4'b0010: begin
-            // AND
+            // AND//
+
+    logic_result = operand_a & operand_b;
+
+    result = logic_result;
         end
 
         4'b0011: begin
             // OR
+        
+
+logic_result = operand_a | operand_b;
+
+result = logic_result;
         end
 
         4'b0100: begin
             // XOR
+
+logic_result = operand_a ^ operand_b;
+
+result = logic_result;
         end
 
         4'b0101: begin
             // Shift Left Logical
+            shift_result = operand_a << operand_b[4:0];
+result = shift_result;
         end
 
         4'b0110: begin
             // Shift Right Logical
+            shift_result = operand_a >> operand_b[4:0];
+result = shift_result;
         end
+4'b0111: begin
+    // Set Less Than (signed comparison)
 
-        4'b0111: begin
-            // Set Less Than
-        end
+    if ($signed(operand_a) < $signed(operand_b))
+        result = {{(DATA_WIDTH-1){1'b0}}, 1'b1};
+    else
+        result = {DATA_WIDTH{1'b0}};
+end
+    
 
         default: begin
             result = {DATA_WIDTH{1'b0}};
@@ -84,6 +134,7 @@ always @(*) begin
 
 end
 
+end
 );
 
 endmodule
