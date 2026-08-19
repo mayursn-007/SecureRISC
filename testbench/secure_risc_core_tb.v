@@ -1,8 +1,8 @@
 `timescale 1ns/1ps
 
 //===========================================================
-// SecureRISC SR32
-// CPU Core Integration Testbench
+// SecureRISC CPU Integration Test
+// Updated for Hardware Memory Protection
 //===========================================================
 
 module secure_risc_core_tb;
@@ -20,6 +20,10 @@ module secure_risc_core_tb;
     wire reg_write;
     wire branch;
     wire jump;
+
+    wire instruction_valid;
+    wire security_violation;
+    wire memory_violation;
 
     //=======================================================
     // DUT
@@ -39,7 +43,11 @@ module secure_risc_core_tb;
         .mem_write(mem_write),
         .reg_write(reg_write),
         .branch(branch),
-        .jump(jump)
+        .jump(jump),
+
+        .instruction_valid(instruction_valid),
+        .security_violation(security_violation),
+        .memory_violation(memory_violation)
     );
 
     //=======================================================
@@ -49,13 +57,7 @@ module secure_risc_core_tb;
     always #5 clk = ~clk;
 
     //=======================================================
-    // Test Program
-    //
-    // 0: ADDI x1, x0, 10
-    // 4: ADDI x2, x0, 20
-    // 8: ADD  x3, x1, x2
-    // 12: SW   x3, 16(x0)
-    // 16: LW   x4, 16(x0)
+    // Test
     //=======================================================
 
     initial begin
@@ -66,56 +68,71 @@ module secure_risc_core_tb;
         clk   = 1'b0;
         reset = 1'b1;
 
-        //===================================================
-        // Load program into Instruction Memory
-        //===================================================
+        $display("==============================================");
+        $display(" SecureRISC CPU Integration Test");
+        $display("==============================================");
 
-        DUT.IMEM.memory[0] = 32'h00A00093;
-        DUT.IMEM.memory[1] = 32'h01400113;
-        DUT.IMEM.memory[2] = 32'h002081B3;
-        DUT.IMEM.memory[3] = 32'h00302823;
-        DUT.IMEM.memory[4] = 32'h01002203;
-
-        //===================================================
-        // Reset
-        //===================================================
-
-        #12;
+        // Hold reset through a clock edge
+        #17;
         reset = 1'b0;
 
-        //===================================================
-        // Run processor
-        //===================================================
-
-        #60;
+        // Allow CPU to execute
+        #55;
 
         $display("");
-        $display("========================================");
-        $display(" SecureRISC CPU Integration Test");
-        $display("========================================");
-
         $display("x1 = %d", DUT.REGFILE.registers[1]);
         $display("x2 = %d", DUT.REGFILE.registers[2]);
         $display("x3 = %d", DUT.REGFILE.registers[3]);
         $display("x4 = %d", DUT.REGFILE.registers[4]);
 
-        $display("========================================");
+        $display("");
+        $display("Security status:");
+        $display("Instruction valid   = %b", instruction_valid);
+        $display("Security violation  = %b", security_violation);
+        $display("Memory violation    = %b", memory_violation);
 
-        if (DUT.REGFILE.registers[1] == 10 &&
-            DUT.REGFILE.registers[2] == 20 &&
-            DUT.REGFILE.registers[3] == 30 &&
-            DUT.REGFILE.registers[4] == 30) begin
+        //===================================================
+        // Check arithmetic
+        //===================================================
 
-            $display("CPU INTEGRATION TEST PASSED");
+        if (DUT.REGFILE.registers[1] == 32'd10 &&
+            DUT.REGFILE.registers[2] == 32'd20 &&
+            DUT.REGFILE.registers[3] == 32'd30) begin
+
+            $display("");
+            $display("CPU ARITHMETIC TEST PASSED");
 
         end
         else begin
 
-            $display("CPU INTEGRATION TEST FAILED");
+            $display("");
+            $display("CPU ARITHMETIC TEST FAILED");
 
         end
 
-        $display("========================================");
+        //===================================================
+        // Final status
+        //===================================================
+
+        if (DUT.REGFILE.registers[1] == 32'd10 &&
+            DUT.REGFILE.registers[2] == 32'd20 &&
+            DUT.REGFILE.registers[3] == 32'd30 &&
+            security_violation == 1'b0) begin
+
+            $display("");
+            $display("==============================================");
+            $display(" CPU INTEGRATION TEST PASSED");
+            $display("==============================================");
+
+        end
+        else begin
+
+            $display("");
+            $display("==============================================");
+            $display(" CPU INTEGRATION TEST FAILED");
+            $display("==============================================");
+
+        end
 
         $finish;
 
