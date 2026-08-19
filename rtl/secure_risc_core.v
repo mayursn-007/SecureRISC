@@ -1,6 +1,10 @@
 //===========================================================
 // SecureRISC SR32
-// Integrated CPU Core with Instruction Security Verification
+// Integrated RISC-V Style CPU Core
+//
+// Security Features:
+// 1. Instruction Verification
+// 2. Hardware Memory Protection
 //===========================================================
 
 module secure_risc_core #(
@@ -9,23 +13,33 @@ module secure_risc_core #(
     input wire clk,
     input wire reset,
 
-    // CPU observation outputs
+    //=======================================================
+    // CPU outputs
+    //=======================================================
+
     output wire [31:0] pc,
     output wire [31:0] instruction,
 
     output wire [31:0] alu_result,
     output wire [31:0] writeback_data,
 
+    //=======================================================
     // Control outputs
+    //=======================================================
+
     output wire mem_read,
     output wire mem_write,
     output wire reg_write,
     output wire branch,
     output wire jump,
 
+    //=======================================================
     // Security outputs
+    //=======================================================
+
     output wire instruction_valid,
-    output wire security_violation
+    output wire security_violation,
+    output wire memory_violation
 );
 
     //=======================================================
@@ -35,7 +49,7 @@ module secure_risc_core #(
     wire [31:0] next_pc;
     wire        pc_write;
 
-    // Instruction decoder signals
+    // Decoder
     wire [4:0] rs1;
     wire [4:0] rs2;
     wire [4:0] rd;
@@ -50,7 +64,7 @@ module secure_risc_core #(
     wire [31:0] register_data_a;
     wire [31:0] register_data_b;
 
-    // Immediate generator
+    // Immediate
     wire [31:0] immediate;
 
     // ALU
@@ -59,6 +73,16 @@ module secure_risc_core #(
 
     // Data memory
     wire [31:0] data_memory_read;
+
+    //=======================================================
+    // Memory protection signals
+    //=======================================================
+
+    wire read_allowed;
+    wire write_allowed;
+
+    wire protected_mem_read;
+    wire protected_mem_write;
 
     //=======================================================
     // 1. Program Counter
@@ -94,16 +118,18 @@ module secure_risc_core #(
     //=======================================================
     // 4. Instruction Decoder
     //
-    // If instruction is valid:
-    //     send original instruction
+    // Valid instruction:
+    //     Original instruction goes to decoder.
     //
-    // If instruction is invalid:
-    //     replace it with a safe NOP-like ADDI instruction
+    // Invalid instruction:
+    //     Replace with safe ADDI/NOP-like instruction.
     //=======================================================
 
     instruction_decoder DECODER (
         .instruction(
-            instruction_valid ? instruction : 32'h00000013
+            instruction_valid ?
+            instruction :
+            32'h00000013
         ),
 
         .rs1(rs1),
@@ -144,14 +170,15 @@ module secure_risc_core #(
 
     //=======================================================
     // 6. Immediate Generator
-    //
-    // Uses the verified/safe instruction going to decoder
     //=======================================================
 
     immediate_generator IMM_GEN (
         .instruction(
-            instruction_valid ? instruction : 32'h00000013
+            instruction_valid ?
+            instruction :
+            32'h00000013
         ),
+
         .immediate(immediate)
     );
 
@@ -160,7 +187,9 @@ module secure_risc_core #(
     //=======================================================
 
     assign alu_operand_b =
-        alu_src ? immediate : register_data_b;
+        alu_src ?
+        immediate :
+        register_data_b;
 
     //=======================================================
     // 8. ALU
@@ -180,14 +209,42 @@ module secure_risc_core #(
     );
 
     //=======================================================
-    // 9. Data Memory
+    // 9. Hardware Memory Protection Unit
+    //=======================================================
+
+    memory_protection_unit MPU (
+        .address(alu_result),
+
+        .mem_read(mem_read),
+        .mem_write(mem_write),
+
+        .read_allowed(read_allowed),
+        .write_allowed(write_allowed),
+
+        .memory_violation(memory_violation)
+    );
+
+    //=======================================================
+    // 10. Protected Memory Control
+    //
+    // Memory access is allowed ONLY when the MPU permits it.
+    //=======================================================
+
+    assign protected_mem_read =
+        mem_read && read_allowed;
+
+    assign protected_mem_write =
+        mem_write && write_allowed;
+
+    //=======================================================
+    // 11. Data Memory
     //=======================================================
 
     data_memory DMEM (
         .clk(clk),
 
-        .mem_read(mem_read),
-        .mem_write(mem_write),
+        .mem_read(protected_mem_read),
+        .mem_write(protected_mem_write),
 
         .address(alu_result),
         .write_data(register_data_b),
@@ -196,31 +253,31 @@ module secure_risc_core #(
     );
 
     //=======================================================
-    // 10. Writeback MUX
+    // 12. Writeback MUX
     //
-    // LOAD -> memory data
+    // LOAD -> Data memory
     // JAL  -> PC + 4
     // ALU  -> ALU result
     //=======================================================
 
     assign writeback_data =
-        mem_read ? data_memory_read :
-        jump     ? (pc + 32'd4) :
-                   alu_result;
+        protected_mem_read ?
+        data_memory_read :
+
+        jump ?
+        (pc + 32'd4) :
+
+        alu_result;
 
     //=======================================================
-    // 11. Next PC Logic
+    // 13. Next PC Logic
     //=======================================================
 
     assign next_pc =
         pc + immediate;
 
     //=======================================================
-    // 12. PC Write Control
-    //
-    // Jump -> change PC
-    // Taken branch -> change PC
-    // Normal instruction -> PC module increments normally
+    // 14. PC Write Control
     //=======================================================
 
     assign pc_write =
