@@ -1,26 +1,31 @@
 //===========================================================
 // SecureRISC SR32
-// CPU Core - First Integrated Datapath
+// Integrated CPU Core with Instruction Security Verification
 //===========================================================
 
 module secure_risc_core #(
     parameter DATA_WIDTH = 32
 )(
-    input  wire clk,
-    input  wire reset,
+    input wire clk,
+    input wire reset,
 
+    // CPU observation outputs
     output wire [31:0] pc,
     output wire [31:0] instruction,
 
     output wire [31:0] alu_result,
     output wire [31:0] writeback_data,
 
+    // Control outputs
     output wire mem_read,
     output wire mem_write,
     output wire reg_write,
     output wire branch,
+    output wire jump,
+
+    // Security outputs
     output wire instruction_valid,
-output wire security_violation
+    output wire security_violation
 );
 
     //=======================================================
@@ -30,7 +35,7 @@ output wire security_violation
     wire [31:0] next_pc;
     wire        pc_write;
 
-    // Instruction decoder
+    // Instruction decoder signals
     wire [4:0] rs1;
     wire [4:0] rs2;
     wire [4:0] rd;
@@ -45,7 +50,7 @@ output wire security_violation
     wire [31:0] register_data_a;
     wire [31:0] register_data_b;
 
-    // Immediate
+    // Immediate generator
     wire [31:0] immediate;
 
     // ALU
@@ -56,7 +61,7 @@ output wire security_violation
     wire [31:0] data_memory_read;
 
     //=======================================================
-    // Program Counter
+    // 1. Program Counter
     //=======================================================
 
     program_counter PC (
@@ -68,7 +73,7 @@ output wire security_violation
     );
 
     //=======================================================
-    // Instruction Memory
+    // 2. Instruction Memory
     //=======================================================
 
     instruction_memory IMEM (
@@ -77,23 +82,29 @@ output wire security_violation
     );
 
     //=======================================================
-// Instruction Verification / Security
-//=======================================================
+    // 3. Instruction Verification
+    //=======================================================
 
-instruction_verifier VERIFIER (
-    .instruction(instruction),
-    .instruction_valid(instruction_valid),
-    .security_violation(security_violation)
-);
+    instruction_verifier VERIFIER (
+        .instruction(instruction),
+        .instruction_valid(instruction_valid),
+        .security_violation(security_violation)
+    );
 
     //=======================================================
-    // Instruction Decoder
+    // 4. Instruction Decoder
+    //
+    // If instruction is valid:
+    //     send original instruction
+    //
+    // If instruction is invalid:
+    //     replace it with a safe NOP-like ADDI instruction
     //=======================================================
 
     instruction_decoder DECODER (
-    .instruction(
-        instruction_valid ? instruction : 32'h00000013
-    ),
+        .instruction(
+            instruction_valid ? instruction : 32'h00000013
+        ),
 
         .rs1(rs1),
         .rs2(rs2),
@@ -113,7 +124,7 @@ instruction_verifier VERIFIER (
     );
 
     //=======================================================
-    // Register File
+    // 5. Register File
     //=======================================================
 
     register_file REGFILE (
@@ -132,23 +143,27 @@ instruction_verifier VERIFIER (
     );
 
     //=======================================================
-    // Immediate Generator
+    // 6. Immediate Generator
+    //
+    // Uses the verified/safe instruction going to decoder
     //=======================================================
 
     immediate_generator IMM_GEN (
-        .instruction(instruction),
+        .instruction(
+            instruction_valid ? instruction : 32'h00000013
+        ),
         .immediate(immediate)
     );
 
     //=======================================================
-    // ALU Operand Selection
+    // 7. ALU Operand Selection
     //=======================================================
 
     assign alu_operand_b =
         alu_src ? immediate : register_data_b;
 
     //=======================================================
-    // ALU
+    // 8. ALU
     //=======================================================
 
     alu_v2 ALU (
@@ -165,7 +180,7 @@ instruction_verifier VERIFIER (
     );
 
     //=======================================================
-    // Data Memory
+    // 9. Data Memory
     //=======================================================
 
     data_memory DMEM (
@@ -181,7 +196,7 @@ instruction_verifier VERIFIER (
     );
 
     //=======================================================
-    // Writeback MUX
+    // 10. Writeback MUX
     //
     // LOAD -> memory data
     // JAL  -> PC + 4
@@ -194,13 +209,18 @@ instruction_verifier VERIFIER (
                    alu_result;
 
     //=======================================================
-    // Branch / Jump Target
+    // 11. Next PC Logic
     //=======================================================
 
-    assign next_pc = pc + immediate;
+    assign next_pc =
+        pc + immediate;
 
     //=======================================================
-    // PC Control
+    // 12. PC Write Control
+    //
+    // Jump -> change PC
+    // Taken branch -> change PC
+    // Normal instruction -> PC module increments normally
     //=======================================================
 
     assign pc_write =
