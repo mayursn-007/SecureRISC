@@ -19,7 +19,8 @@ module secure_risc_core #(
     output wire mem_write,
     output wire reg_write,
     output wire branch,
-    output wire jump
+    output wire instruction_valid,
+output wire security_violation
 );
 
     //=======================================================
@@ -76,11 +77,23 @@ module secure_risc_core #(
     );
 
     //=======================================================
+// Instruction Verification / Security
+//=======================================================
+
+instruction_verifier VERIFIER (
+    .instruction(instruction),
+    .instruction_valid(instruction_valid),
+    .security_violation(security_violation)
+);
+
+    //=======================================================
     // Instruction Decoder
     //=======================================================
 
     instruction_decoder DECODER (
-        .instruction(instruction),
+    .instruction(
+        instruction_valid ? instruction : 32'h00000013
+    ),
 
         .rs1(rs1),
         .rs2(rs2),
