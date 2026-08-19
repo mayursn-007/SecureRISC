@@ -1,6 +1,12 @@
 //===========================================================
 // SecureRISC SR32
 // Hardware Memory Protection Unit (MPU)
+//
+// Memory Map:
+//   0x0000 - 0x00FF : CODE      Read=YES  Write=NO
+//   0x0100 - 0x1FFF : DATA      Read=YES  Write=YES
+//   0x2000 - 0x2FFF : PROTECTED Read=NO   Write=NO
+//   Everything else : BLOCKED
 //===========================================================
 
 module memory_protection_unit (
@@ -18,18 +24,16 @@ module memory_protection_unit (
     always @(*) begin
 
         // Safe defaults
-        read_allowed    = 1'b0;
-        write_allowed   = 1'b0;
+        read_allowed     = 1'b0;
+        write_allowed    = 1'b0;
         memory_violation = 1'b0;
 
         //===================================================
         // CODE REGION
-        // 0x0000 - 0x0FFF
-        // Read allowed, Write forbidden
         //===================================================
 
         if (address >= 32'h00000000 &&
-            address <= 32'h00000FFF) begin
+            address <= 32'h000000FF) begin
 
             read_allowed  = 1'b1;
             write_allowed = 1'b0;
@@ -38,11 +42,9 @@ module memory_protection_unit (
 
         //===================================================
         // DATA REGION
-        // 0x1000 - 0x1FFF
-        // Read and Write allowed
         //===================================================
 
-        else if (address >= 32'h00001000 &&
+        else if (address >= 32'h00000100 &&
                  address <= 32'h00001FFF) begin
 
             read_allowed  = 1'b1;
@@ -52,8 +54,6 @@ module memory_protection_unit (
 
         //===================================================
         // PROTECTED REGION
-        // 0x2000 - 0x2FFF
-        // No access allowed
         //===================================================
 
         else if (address >= 32'h00002000 &&
@@ -65,8 +65,7 @@ module memory_protection_unit (
         end
 
         //===================================================
-        // All other addresses
-        // No access allowed
+        // EVERYTHING ELSE
         //===================================================
 
         else begin
@@ -77,7 +76,7 @@ module memory_protection_unit (
         end
 
         //===================================================
-        // SECURITY VIOLATION DETECTION
+        // VIOLATION DETECTION
         //===================================================
 
         if ((mem_read && !read_allowed) ||
