@@ -1,179 +1,113 @@
-\# SecureRISC 🔐
+# SecureRISC 🔐
 
-\### Hardware-Assisted Secure RISC-V Processor
-
-
+## A Hardware-Assisted Secure RISC-V-Style Processor
 
 SecureRISC is a 32-bit RISC-V-style processor designed with
-
 hardware-assisted security mechanisms for detecting and blocking
-
 unauthorized instruction execution and memory access.
 
-
-
 The project combines processor architecture, RTL design, hardware security,
-
 simulation, and verification into a single processor implementation.
 
+---
 
+## 🚀 Overview
 
-\---
+Modern processors can be exposed to attacks involving malformed
+instructions and unauthorized memory accesses.
 
+SecureRISC explores how these threats can be addressed directly at the
+hardware level.
 
+The processor incorporates two primary security mechanisms:
 
-\## 🚀 Project Highlights
+1. **Enhanced Instruction Verification**
+2. **Hardware Memory Protection Unit (MPU)**
 
+These mechanisms are integrated into the CPU datapath and verified through
+simulation and deliberate security attack scenarios.
 
+---
 
-\- 32-bit RISC-V-style processor
+## ✨ Key Features
 
-\- ALU and register file
+- 32-bit RISC-V-style processor architecture
+- Arithmetic Logic Unit (ALU)
+- 32 × 32-bit register file
+- Program counter
+- Instruction decoder
+- Immediate generator
+- Instruction memory
+- Data memory
+- Enhanced instruction verification
+- Hardware Memory Protection Unit (MPU)
+- Illegal instruction detection
+- Instruction encoding validation
+- Protected memory regions
+- Unauthorized memory access detection
+- Unauthorized memory access blocking
+- CPU-level security attack simulation
+- RTL simulation using Icarus Verilog
+- Waveform analysis using GTKWave
+- Automated security regression testing
 
-\- Program counter
+---
 
-\- Instruction decoder
-
-\- Immediate generator
-
-\- Instruction memory
-
-\- Data memory
-
-\- Hardware instruction verifier
-
-\- Hardware Memory Protection Unit (MPU)
-
-\- Illegal instruction detection
-
-\- Unauthorized memory access detection
-
-\- Protected memory regions
-
-\- CPU-level security attack simulation
-
-\- Icarus Verilog simulation
-
-\- GTKWave waveform verification
-
-\- Security regression testing
-
-
-
-\---
-
-
-
-\## 🧠 System Architecture
-
-
+# 🧩 System Architecture
 
 ```text
-
-&#x20;                +--------------------+
-
-&#x20;                |   Program Counter  |
-
-&#x20;                +---------+----------+
-
-&#x20;                          |
-
-&#x20;                          v
-
-&#x20;                +--------------------+
-
-&#x20;                | Instruction Memory |
-
-&#x20;                +---------+----------+
-
-&#x20;                          |
-
-&#x20;                          v
-
-&#x20;                +--------------------+
-
-&#x20;                | Instruction        |
-
-&#x20;                | Verifier           |
-
-&#x20;                +---------+----------+
-
-&#x20;                          |
-
-&#x20;                    Valid / Invalid
-
-&#x20;                          |
-
-&#x20;                          v
-
-&#x20;                +--------------------+
-
-&#x20;                | Instruction Decoder|
-
-&#x20;                +---------+----------+
-
-&#x20;                          |
-
-&#x20;             +------------+------------+
-
-&#x20;             |                         |
-
-&#x20;             v                         v
-
-&#x20;      +-------------+          +---------------+
-
-&#x20;      | Register    |          | Immediate     |
-
-&#x20;      | File        |          | Generator     |
-
-&#x20;      +------+------+          +-------+-------+
-
-&#x20;             |                         |
-
-&#x20;             +------------+------------+
-
-&#x20;                          |
-
-&#x20;                          v
-
-&#x20;                   +-------------+
-
-&#x20;                   |     ALU     |
-
-&#x20;                   +------+------+
-
-&#x20;                          |
-
-&#x20;                          v
-
-&#x20;                +--------------------+
-
-&#x20;                | Memory Protection  |
-
-&#x20;                | Unit (MPU)         |
-
-&#x20;                +---------+----------+
-
-&#x20;                          |
-
-&#x20;                +---------+---------+
-
-&#x20;                |                   |
-
-&#x20;                v                   v
-
-&#x20;         Authorized Access    Unauthorized Access
-
-&#x20;                |                   |
-
-&#x20;                v                   v
-
-&#x20;          +-----------+       +-------------+
-
-&#x20;          | Data      |       | Security    |
-
-&#x20;          | Memory    |       | Violation   |
-
-&#x20;          +-----------+       +-------------+
+                         +----------------------+
+                         |   Program Counter    |
+                         +----------+-----------+
+                                    |
+                                    v
+                         +----------------------+
+                         |  Instruction Memory  |
+                         +----------+-----------+
+                                    |
+                                    v
+                         +----------------------+
+                         | Instruction Verifier |
+                         |    Security Check    |
+                         +----------+-----------+
+                                    |
+                         Valid Instruction
+                                    |
+                                    v
+                         +----------------------+
+                         | Instruction Decoder  |
+                         +----------+-----------+
+                                    |
+                    +---------------+---------------+
+                    |                               |
+                    v                               v
+             +-------------+                +---------------+
+             | Register    |                | Immediate     |
+             | File        |                | Generator     |
+             +------+------+                +-------+-------+
+                    |                               |
+                    +---------------+---------------+
+                                    |
+                                    v
+                              +-----------+
+                              |    ALU    |
+                              +-----+-----+
+                                    |
+                                    v
+                         +----------------------+
+                         | Memory Protection    |
+                         | Unit (MPU)           |
+                         +----------+-----------+
+                                    |
+                         +----------+----------+
+                         |                     |
+                         v                     v
+                  Authorized Access      Unauthorized Access
+                         |                     |
+                         v                     v
+                  +-------------+       +----------------+
+                  | Data Memory  |       | Security       |
+                  |             |       | Violation      |
+                  +-------------+       +----------------+
 
 
