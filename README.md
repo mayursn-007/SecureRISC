@@ -1,5 +1,7 @@
 # SecureRISC 🔐
 
+[![SecureRISC CI](https://github.com/mayursn-007/SecureRISC/actions/workflows/verilog.yml/badge.svg)](https://github.com/mayursn-007/SecureRISC/actions/workflows/verilog.yml)
+
 ## A Hardware-Assisted Secure RISC-V-Style Processor
 
 SecureRISC is a 32-bit RISC-V-style processor designed with
