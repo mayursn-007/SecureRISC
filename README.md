@@ -64,6 +64,8 @@ analysis.
 
 #  System Architecture
 
+![SecureRISC Architecture](diagrams/securerisc_architecture.png)
+
 ```text
                          +----------------------+
                          |   Program Counter    |
