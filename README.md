@@ -1,4 +1,4 @@
-# Hi, I'm Mayur 👋
+# Hi, I'm Mayur S Nagoji
 
 ### Electronics & Communication Engineering Student | RTL Design | VLSI | Hardware Security
 
@@ -10,7 +10,7 @@ inside processor hardware.
 
 ---
 
-## 🔐 Featured Project
+##  Featured Project
 
 ### SecureRISC
 
@@ -35,7 +35,7 @@ security mechanisms.
 
 ---
 
-## 🛠️ Technologies
+##  Technologies
 
 **Hardware / RTL**
 
@@ -58,7 +58,7 @@ security mechanisms.
 
 ---
 
-## 📌 Areas of Interest
+##  Areas of Interest
 
 - Processor Architecture
 - Hardware Security
@@ -70,17 +70,17 @@ security mechanisms.
 
 ---
 
-## 🚀 Current Focus
+##  Current Focus
 
 Building and verifying hardware systems with security mechanisms
 implemented at the RTL level.
 
 ---
 
-## 📊 GitHub
+##  GitHub
 
 [![SecureRISC CI](https://github.com/mayursn-007/SecureRISC/actions/workflows/verilog.yml/badge.svg)](https://github.com/mayursn-007/SecureRISC/actions/workflows/verilog.yml)
 
 ---
 
-### Let's build secure hardware. 🔐
+### Thank You
