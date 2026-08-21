@@ -2,14 +2,24 @@
 // Project : SecureRISC SR32
 // Module  : ALU
 // Version : v0.2
-// Status  : Under Development
+// Status  : Verified
 // Author  : Mayur S Nagoji
 //===========================================================
 // Description:
 // 32-bit combinational Arithmetic Logic Unit.
 // Supports arithmetic, logical and shift operations.
 //
+// ALU Operations:
+// 0000 - ADD
+// 0001 - SUB
+// 0010 - AND
+// 0011 - OR
+// 0100 - XOR
+// 0101 - SLL
+// 0110 - SRL
+// 0111 - SLT
 //===========================================================
+
 module alu_v2
 #(
     parameter DATA_WIDTH = 32
@@ -21,120 +31,184 @@ module alu_v2
     input  [3:0] alu_control,
 
     output reg [DATA_WIDTH-1:0] result,
-
-output reg carry_flag,
-output reg overflow_flag,
-output zero_flag,
-output negative_flag
+    output reg carry_flag,
+    output reg overflow_flag,
+    output zero_flag,
+    output negative_flag
 );
-    assign zero_flag = (result == 0);
-assign negative_flag = result[DATA_WIDTH-1];
-    //===========================================================
-// Combinational Logic
-//===========================================================
 
-always @(*) begin
+    //=======================================================
+    // Internal signals
+    //=======================================================
 
-    // Default values
-    result           = {DATA_WIDTH{1'b0}};
-    arithmetic_result = {DATA_WIDTH{1'b0}};
-    logic_result      = {DATA_WIDTH{1'b0}};
-    shift_result      = {DATA_WIDTH{1'b0}};
+    reg [DATA_WIDTH-1:0] arithmetic_result;
+    reg [DATA_WIDTH-1:0] logic_result;
+    reg [DATA_WIDTH-1:0] shift_result;
+    reg carry_temp;
 
-    carry_flag       = 1'b0;
-    carry_temp       = 1'b0;
-    overflow_flag    = 1'b0;
+    //=======================================================
+    // Status flags
+    //=======================================================
 
-    case (alu_control)
+    assign zero_flag     = (result == {DATA_WIDTH{1'b0}});
+    assign negative_flag = result[DATA_WIDTH-1];
 
-        4'b0000: begin
+    //=======================================================
+    // Combinational ALU Logic
+    //=======================================================
+
+    always @(*) begin
+
+        // Default values
+        result            = {DATA_WIDTH{1'b0}};
+        arithmetic_result = {DATA_WIDTH{1'b0}};
+        logic_result      = {DATA_WIDTH{1'b0}};
+        shift_result      = {DATA_WIDTH{1'b0}};
+
+        carry_flag        = 1'b0;
+        carry_temp        = 1'b0;
+        overflow_flag     = 1'b0;
+
+        case (alu_control)
+
+            //================================================
             // ADD
-    {carry_temp, arithmetic_result} = operand_a + operand_b;
+            //================================================
 
-    result = arithmetic_result;
+            4'b0000: begin
 
-    carry_flag = carry_temp;
+                {carry_temp, arithmetic_result} =
+                    operand_a + operand_b;
 
-    overflow_flag =
-        (~operand_a[DATA_WIDTH-1] &
-         ~operand_b[DATA_WIDTH-1] &
-          result[DATA_WIDTH-1]) |
+                result = arithmetic_result;
 
-        ( operand_a[DATA_WIDTH-1] &
-          operand_b[DATA_WIDTH-1] &
-         ~result[DATA_WIDTH-1]);
-end
+                carry_flag = carry_temp;
 
-        4'b0001: begin
+                overflow_flag =
+                    (~operand_a[DATA_WIDTH-1] &
+                     ~operand_b[DATA_WIDTH-1] &
+                      result[DATA_WIDTH-1]) |
+
+                    ( operand_a[DATA_WIDTH-1] &
+                      operand_b[DATA_WIDTH-1] &
+                     ~result[DATA_WIDTH-1]);
+
+            end
+
+            //================================================
             // SUB
-{carry_temp, arithmetic_result} = operand_a - operand_b;
+            //================================================
 
-result = arithmetic_result;
+            4'b0001: begin
 
-carry_flag = carry_temp;
+                {carry_temp, arithmetic_result} =
+                    operand_a - operand_b;
 
-overflow_flag =
-    (~operand_a[DATA_WIDTH-1] &
-      operand_b[DATA_WIDTH-1] &
-      result[DATA_WIDTH-1]) |
+                result = arithmetic_result;
 
-    ( operand_a[DATA_WIDTH-1] &
-     ~operand_b[DATA_WIDTH-1] &
-     ~result[DATA_WIDTH-1]);
-        end
+                carry_flag = carry_temp;
 
-        4'b0010: begin
-            // AND//
+                overflow_flag =
+                    (~operand_a[DATA_WIDTH-1] &
+                      operand_b[DATA_WIDTH-1] &
+                      result[DATA_WIDTH-1]) |
 
-    logic_result = operand_a & operand_b;
+                    ( operand_a[DATA_WIDTH-1] &
+                     ~operand_b[DATA_WIDTH-1] &
+                     ~result[DATA_WIDTH-1]);
 
-    result = logic_result;
-        end
+            end
 
-        4'b0011: begin
+            //================================================
+            // AND
+            //================================================
+
+            4'b0010: begin
+
+                logic_result = operand_a & operand_b;
+
+                result = logic_result;
+
+            end
+
+            //================================================
             // OR
-        
+            //================================================
 
-logic_result = operand_a | operand_b;
+            4'b0011: begin
 
-result = logic_result;
-        end
+                logic_result = operand_a | operand_b;
 
-        4'b0100: begin
+                result = logic_result;
+
+            end
+
+            //================================================
             // XOR
+            //================================================
 
-logic_result = operand_a ^ operand_b;
+            4'b0100: begin
 
-result = logic_result;
-        end
+                logic_result = operand_a ^ operand_b;
 
-        4'b0101: begin
+                result = logic_result;
+
+            end
+
+            //================================================
             // Shift Left Logical
-            shift_result = operand_a << operand_b[4:0];
-result = shift_result;
-        end
+            //================================================
 
-        4'b0110: begin
+            4'b0101: begin
+
+                shift_result = operand_a << operand_b[4:0];
+
+                result = shift_result;
+
+            end
+
+            //================================================
             // Shift Right Logical
-            shift_result = operand_a >> operand_b[4:0];
-result = shift_result;
-        end
-4'b0111: begin
-    // Set Less Than (signed comparison)
+            //================================================
 
-    if ($signed(operand_a) < $signed(operand_b))
-        result = {{(DATA_WIDTH-1){1'b0}}, 1'b1};
-    else
-        result = {DATA_WIDTH{1'b0}};
-end
-    
+            4'b0110: begin
 
-        default: begin
-            result = {DATA_WIDTH{1'b0}};
-        end
+                shift_result = operand_a >> operand_b[4:0];
 
-    endcase
+                result = shift_result;
 
-end
+            end
+
+            //================================================
+            // Set Less Than
+            // Signed comparison
+            //================================================
+
+            4'b0111: begin
+
+                if ($signed(operand_a) < $signed(operand_b))
+                    result =
+                        {{(DATA_WIDTH-1){1'b0}}, 1'b1};
+                else
+                    result =
+                        {DATA_WIDTH{1'b0}};
+
+            end
+
+            //================================================
+            // Unsupported ALU operation
+            //================================================
+
+            default: begin
+
+                result        = {DATA_WIDTH{1'b0}};
+                carry_flag    = 1'b0;
+                overflow_flag = 1'b0;
+
+            end
+
+        endcase
+
+    end
 
 endmodule
