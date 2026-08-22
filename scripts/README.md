@@ -1,14 +1,28 @@
 # Scripts
 
-This directory contains helper scripts used during the SecureRISC development.
+Helper scripts for repeatable SecureRISC simulation and verification.
 
-Examples:
+## `run_tests.sh`
 
-- Simulation automation
-- Build automation
-- Documentation generation
-- FPGA synthesis automation
+Runs the main local regression set using Icarus Verilog:
 
-Current Status:
+1. CPU integration test
+2. Instruction verifier test
+3. Memory Protection Unit test
+4. CPU instruction-security attack test
+5. CPU memory-protection attack test
 
-No scripts have been added yet.
+### Requirements
+
+- Bash
+- Icarus Verilog (`iverilog` and `vvp`)
+
+### Run
+
+From the repository root:
+
+```bash
+bash scripts/run_tests.sh
+```
+
+The script creates a local `build/` directory for compiled simulation executables.
