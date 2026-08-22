@@ -19,31 +19,5 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y iverilog
 
-      - name: Compile CPU
-        run: |
-          iverilog -g2012 \
-          -o cpu_sim \
-          rtl/secure_risc_core.v \
-          rtl/alu_v2.v \
-          rtl/register_file.v \
-          rtl/program_counter.v \
-          rtl/instruction_decoder.v \
-          rtl/immediate_generator.v \
-          rtl/instruction_memory.v \
-          rtl/data_memory.v \
-          rtl/instruction_verifier.v \
-          rtl/memory_protection_unit.v \
-          testbench/secure_risc_core_tb.v
-
-      - name: Run CPU test
-        run: vvp cpu_sim
-
-      - name: Compile Instruction Verifier
-        run: |
-          iverilog -g2012 \
-          -o verifier_sim \
-          rtl/instruction_verifier.v \
-          testbench/instruction_verifier_tb.v
-
-      - name: Run Instruction Verifier
-        run: vvp verifier_sim
+      - name: Run SecureRISC regression
+        run: bash scripts/run_tests.sh
